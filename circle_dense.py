@@ -176,7 +176,7 @@ def main():
     record_point_output = np.delete(record_point_output, obj=0, axis=0)  # Delete the initial value (Row: 0)
     drawing_plots([record_point_output[:, 0], record_point_output[:, 1]])
 
-    # make_gif(record_point_output)
+    make_gif(record_point_output)
 
 if __name__ == "__main__":
     main()
