@@ -168,7 +168,6 @@ def main():
     is_save = True  #save the model parameters 
 
     points = make_Lissajous_points(num_div)
-
     train_dataset = point_dataset(points, is_Noise=False)
     test_dataset = point_dataset(points, is_Noise=True)
 
@@ -180,8 +179,6 @@ def main():
     model = DenseNet()
     criterion = torch.nn.MSELoss()
     criterion_q = torch.nn.CrossEntropyLoss()
-    # criterion = torch.nn.BCELoss()
-    # criterion = torch.nn.BCEWithLogitsLoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=0.0001)   #adam  lr=0.0001
 
     for epoch in range(num_epoch):
@@ -195,27 +192,38 @@ def main():
         print(f"Epoch [{epoch+1}/{num_epoch}], Loss: {ave_train_loss:.5f},"
             f"val_loss: {ave_val_loss:.5f} | label: {ave_train_q_loss:.5f}, {ave_val_q_loss:.5f}")
 
+        # record losses
         train_loss_list.append(ave_train_loss)
         train_loss_q_list.append(ave_train_q_loss)
         val_loss_list.append(ave_val_loss)
         val_loss_q_list.append(ave_val_q_loss)
     
     drawing_loss_graph(num_epoch, train_loss_list, train_loss_q_list, val_loss_list, val_loss_q_list)
+
     # save parameters of the model
     if is_save == True:
         model_path = 'model.pth'
+        optim_path = 'optim.pth'
         torch.save(model.state_dict(), model_path)
+        torch.save(optimizer.state_dict(), optim_path)
 
+    # initialize parameters
+    model2 = RnnNet()
+    optimizer2 = torch.optim.Adam(model.parameters(), lr=0.0001)   #adam  lr=0.0001
     # read parameters of the model
     model_path = 'model.pth'
-    model2 = DenseNet()
+    optim_path = 'optim.pth'
     model2.load_state_dict(torch.load(model_path))
+    optimizer2.load_state_dict(torch.load(optim_path))
+
     # test
     model2.eval()
-    ave_test_loss, ave_test_q_loss, record_point_output, record_label_output = testing(test_loader, model, criterion, criterion_q, optimizer)
+    ave_test_loss, ave_test_q_loss, record_point_output, record_label_output = testing(test_loader, 
+                                                        model2, criterion, criterion_q, optimizer2)
     print(f"Test Loss: {ave_test_loss:.5f}, label: {ave_test_q_loss:.5f}")
 
-    record_point_output = np.delete(record_point_output, obj=0, axis=0)  # Delete the initial value (Row: 0)
+    record_point_output = np.delete(record_point_output, obj=0, axis=0)  # Delete the initial 
+                                                                         # value (Row: 0)
     print(record_label_output)
     drawing_plots([record_point_output[:, 0], record_point_output[:, 1]], record_label_output)
 

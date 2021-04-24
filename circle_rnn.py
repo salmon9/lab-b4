@@ -129,7 +129,6 @@ def main():
     is_save = True  #save the model parameters 
 
     points = make_circle_points(num_div)
-
     train_dataset = point_dataset(points, is_Noise=False)
     test_dataset = point_dataset(points, is_Noise=True)
 
@@ -153,22 +152,31 @@ def main():
         print(f"Epoch [{epoch+1}/{num_epoch}], Loss: {ave_train_loss:.5f},"
             f"val_loss: {ave_val_loss:.5f}")
 
+        # record losses
         train_loss_list.append(ave_train_loss)
         val_loss_list.append(ave_val_loss)
     
     drawing_loss_graph(num_epoch, train_loss_list, val_loss_list)
+
     # save parameters of the model
     if is_save == True:
         model_path = 'model.pth'
+        optim_path = 'optim.pth'
         torch.save(model.state_dict(), model_path)
+        torch.save(optimizer.state_dict(), optim_path)
 
+    # initialize parameters
+    model2 = RnnNet()
+    optimizer2 = torch.optim.Adam(model.parameters(), lr=0.0001)   #adam  lr=0.0001
     # read parameters of the model
     model_path = 'model.pth'
-    model2 = RnnNet()
+    optim_path = 'optim.pth'
     model2.load_state_dict(torch.load(model_path))
+    optimizer2.load_state_dict(torch.load(optim_path))
+
     # test
     model2.eval()
-    ave_test_loss, record_point_output = testing(test_loader, model, criterion, optimizer)
+    ave_test_loss, record_point_output = testing(test_loader, model2, criterion, optimizer2)
     print(f"Test Loss: {ave_test_loss:.5f}")
 
     record_point_output = np.delete(record_point_output, obj=0, axis=0)  # Delete the initial value (Row: 0)
